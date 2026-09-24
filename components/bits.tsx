@@ -2,9 +2,15 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { useState } from "react";
 import type { ReactNode } from "react";
 import type { ReadResult } from "../lib/guard/chain.ts";
 import { ENFORCEMENT_SCOPE_STATEMENT } from "../lib/guard/network.ts";
+import {
+  formatRawStroops,
+  formatStroopsWithUnit,
+  type FormatStroopsOptions,
+} from "../lib/guard/formatters.ts";
 
 export function Tabs() {
   const pathname = usePathname();
@@ -149,5 +155,32 @@ export function starLink(hash: string): ReactNode {
     <a href={`https://stellar.expert/explorer/testnet/tx/${hash}`} target="_blank" rel="noreferrer">
       <span className="mono">{short(hash, 10, 6)}</span>
     </a>
+  );
+}
+
+export interface AmountDisplayProps extends FormatStroopsOptions {
+  /** Amount in stroops (BigInt-safe). */
+  stroops: bigint | number | string;
+}
+
+/**
+ * Render a stroop amount human-readably, with a one-click toggle to the
+ * exact raw stroops. A button (not a bare click target) so the toggle is
+ * keyboard-operable and announced.
+ */
+export function AmountDisplay({ stroops, symbol, decimals }: AmountDisplayProps) {
+  const [showRaw, setShowRaw] = useState(false);
+  const human = formatStroopsWithUnit(stroops, { symbol, decimals });
+  const raw = formatRawStroops(stroops);
+  return (
+    <button
+      type="button"
+      className="mono"
+      onClick={() => setShowRaw((v) => !v)}
+      aria-label={showRaw ? `Raw amount: ${raw}` : `Amount: ${human}. Activate to show raw stroops.`}
+      title={showRaw ? "Show human-readable amount" : "Show raw stroops"}
+    >
+      {showRaw ? raw : human}
+    </button>
   );
 }
